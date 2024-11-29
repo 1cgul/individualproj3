@@ -51,14 +51,14 @@ fun MainScreen(navController: NavController) {
                 GameIcon(
                     iconResourceId = R.drawable.matchinggame,
                     gameName = "Matching Game",
-                    onClick = { /* TODO: Add navigation to Matching Game */ }
+                    onClick = { navController.navigate("matching_level_selection_screen") }
                 )
 
                 // Math Game
                 GameIcon(
                     iconResourceId = R.drawable.mathgame,
                     gameName = "Math Game",
-                    onClick = { /* TODO: Add navigation to Math Game */ }
+                    onClick = { navController.navigate("math_screen") }
                 )
             }
         }

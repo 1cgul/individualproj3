@@ -19,11 +19,21 @@ fun Navigation(){
         composable("main_screen"){
             MainScreen(navController)
         }
-        composable("matching_screen"){
-            MatchingGameScreen(navController)
+        composable("matching_screen/1"){
+            MatchingGameScreen(navController, 1)
         }
+        composable("matching_screen/2"){
+            MatchingGameScreen(navController, 2)
+        }
+        composable("matching_screen/3"){
+            MatchingGameScreen(navController, 3)
+        }
+
         composable("math_screen"){
             MathGameScreen(navController)
+        }
+        composable("matching_level_selection_screen"){
+            LevelSelectionScreen(navController)
         }
 
     }
