@@ -8,7 +8,7 @@ import androidx.navigation.compose.rememberNavController
 @Composable
 fun Navigation(){
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "login_screen"){
+    NavHost(navController = navController, startDestination = "math_screen/1"){
 
         composable("login_screen"){
             LoginScreen(navController)
@@ -29,11 +29,21 @@ fun Navigation(){
             MatchingGameScreen(navController, 3)
         }
 
-        composable("math_screen"){
-            MathGameScreen(navController)
+        composable("math_screen/1"){
+            MathGameScreen(navController, 1)
         }
+        composable("math_screen/2"){
+            MathGameScreen(navController, 2)
+        }
+        composable("math_screen/3"){
+            MathGameScreen(navController,3 )
+        }
+
         composable("matching_level_selection_screen"){
             LevelSelectionScreen(navController)
+        }
+        composable("math_level_selection"){
+            MathLevelSelection(navController)
         }
 
     }

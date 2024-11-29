@@ -58,7 +58,7 @@ fun MainScreen(navController: NavController) {
                 GameIcon(
                     iconResourceId = R.drawable.mathgame,
                     gameName = "Math Game",
-                    onClick = { navController.navigate("math_screen") }
+                    onClick = { navController.navigate("math_screen/1") }
                 )
             }
         }
