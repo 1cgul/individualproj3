@@ -82,7 +82,6 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
             modifier = Modifier
                 .width(150.dp),
 
-            // Use the custom color defined in the theme for the button
             colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
         ) {
             Text("Create Account", color = Color.White)
@@ -94,7 +93,6 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
         ) {
             Text(text = "Already have an account?", modifier = Modifier.padding(end = 4.dp))
 
-            // Clickable Text for Login
             Text(
                 text = "Login",
                 color = Color.Blue,

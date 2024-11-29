@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
+
 
 @Composable
 fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
@@ -75,7 +75,6 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
             modifier = Modifier
                 .width(150.dp),
 
-            // Use the custom color defined in the theme for the button
             colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
         ) {
             Text("Login", color = Color.White)
@@ -87,7 +86,6 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
         ) {
             Text(text = "Don't have an account?", modifier = Modifier.padding(end = 4.dp))
 
-            // Clickable Text for Login
             Text(
                 text = "Register",
                 color = Color.Blue,
