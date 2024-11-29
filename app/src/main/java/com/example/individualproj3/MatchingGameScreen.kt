@@ -1,7 +1,6 @@
 package com.example.individualproj3
 
 import android.content.pm.ActivityInfo
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,8 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
@@ -42,12 +43,9 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
 
     var cards by remember { mutableStateOf(generateCards(levelNumber)) }
     var selectedCards by remember { mutableStateOf(listOf<Card>()) }
-    var remainingAttempts by remember { mutableStateOf(3) }
-
-    // Back handler (currently does nothing)
-    BackHandler {
-        navController.navigate("level_selection_screen")
-    }
+    var remainingAttempts by remember { mutableStateOf(5) }
+    var showCompletionPopup by remember { mutableStateOf(false) }
+    var showFailurePopup by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -55,7 +53,6 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
                 title = { Text("Level $levelNumber") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        // No functionality added as per request
                         navController.navigate("matching_level_selection_screen")
                     }) {
                         Icon(
@@ -75,7 +72,7 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                "Remaining Attemps: $remainingAttempts",
+                "Remaining Attempts: $remainingAttempts",
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -108,12 +105,82 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
                 )
             }
         }
+
+        // Completion Popup
+        if (showCompletionPopup) {
+            AlertDialog(
+                onDismissRequest = { /* Prevents dismissing by clicking outside */ },
+                title = { Text("Congratulations!", textAlign = TextAlign.Center) },
+                text = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("You completed Level $levelNumber!", textAlign = TextAlign.Center)
+                        Text("Remaining Attempts: $remainingAttempts", textAlign = TextAlign.Center)
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            navController.navigate("matching_level_selection_screen")
+                            showCompletionPopup = false
+                        }
+                    ) {
+                        Text("Return to Levels")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            // Restart the same level
+                            cards = generateCards(levelNumber)
+                            selectedCards = emptyList()
+                            remainingAttempts = 5
+                            showCompletionPopup = false
+                        }
+                    ) {
+                        Text("Retry Level")
+                    }
+                }
+            )
+        }
+
+        // Failure Popup
+        if (showFailurePopup) {
+            AlertDialog(
+                onDismissRequest = { /* Prevents dismissing by clicking outside */ },
+                title = { Text("Game Over", textAlign = TextAlign.Center) },
+                text = { Text("You've run out of attempts.", textAlign = TextAlign.Center) },
+                confirmButton = {
+                    Button(
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
+                        onClick = {
+                            navController.navigate("matching_level_selection_screen")
+                            showFailurePopup = false
+                        }
+                    ) {
+                        Text("Return to Levels")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
+                        onClick = {
+                            // Restart the same level
+                            cards = generateCards(levelNumber)
+                            selectedCards = emptyList()
+                            remainingAttempts = 5
+                            showFailurePopup = false
+                        }
+                    ) {
+                        Text("Retry Level")
+                    }
+                }
+            )
+        }
     }
 
     // Game Logic
     LaunchedEffect(selectedCards) {
         if (selectedCards.size == 2) {
-
             if (selectedCards[0].value == selectedCards[1].value) {
                 // Matched cards
                 cards = cards.map { card ->
@@ -124,7 +191,7 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
 
                 // Check for level completion
                 if (cards.all { it.isMatched }) {
-                    // navController.navigate() navigate to celebration screen TODO
+                    showCompletionPopup = true
                 }
             } else {
                 // No match
@@ -132,7 +199,7 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
 
                 if (remainingAttempts <= 0) {
                     // Game Over
-                    navController.navigate("level_selection_screen")
+                    showFailurePopup = true
                 } else {
                     delay(1000) // Show cards briefly
                     cards = cards.map {
@@ -206,6 +273,7 @@ fun <T> GridLayout(
     }
 }
 
+// Only using a few cards for simplicity
 fun getCardResourceId(cardValue: String): Int {
     return when(cardValue) {
         "2_of_clubs" -> R.drawable.two_of_clubs
