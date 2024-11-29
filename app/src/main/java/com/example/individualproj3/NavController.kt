@@ -16,6 +16,9 @@ fun Navigation(){
         composable("register_screen"){
             RegisterScreen(navController)
         }
+        composable("main_screen"){
+            MainScreen(navController)
+        }
 
     }
 }
