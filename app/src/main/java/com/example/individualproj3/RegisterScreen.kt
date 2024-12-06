@@ -61,7 +61,7 @@ fun readUserCredentials(context: Context): UserCredentials? {
                     username = lines[0],
                     email = lines[1],
                     password = lines[2],
-                    parentPin = lines[3].removePrefix("pin:") // Remove the "pin:" prefix when reading
+                    parentPin = lines[3].removePrefix("pin:")
                 )
             } else null
         } else null
@@ -190,7 +190,6 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
                         username.isNotEmpty() && email.isNotEmpty() &&
                         password.isNotEmpty() && parentPin.isNotEmpty()) {
 
-                        // Save credentials when creating account
                         val credentials = UserCredentials(
                             username = username,
                             email = email,
