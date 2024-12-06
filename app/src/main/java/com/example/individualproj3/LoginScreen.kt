@@ -26,11 +26,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material3.Surface
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
-fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
+fun LoginScreen(
+    navController: NavController,
+    sessionManager: SessionManager,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
     var emailOrUsername by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showError by remember { mutableStateOf(false) }
 
     // Error states
     var emailOrUsernameError by remember { mutableStateOf(false) }
@@ -43,10 +50,9 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
 
     Surface(
         color = Color(0xFFFFFFFF)
-    ){
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -95,15 +101,33 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
                     .padding(20.dp)
             )
 
+            if (showError) {
+                Text(
+                    text = "Invalid credentials. Please try again.",
+                    color = Color.Red,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
             Button(
                 onClick = {
                     if (!emailOrUsernameError && !passwordError &&
                         emailOrUsername.isNotEmpty() && password.isNotEmpty()) {
-                        navController.navigate("main_screen")
+                        val storedCredentials = readUserCredentials(context)
+                        if (storedCredentials != null &&
+                            (emailOrUsername == storedCredentials.username ||
+                                    emailOrUsername == storedCredentials.email) &&
+                            password == storedCredentials.password) {
+                            showError = false
+                            sessionManager.saveLoginState(true)
+                            navController.navigate("main_screen") {
+                                popUpTo("login_screen") { inclusive = true }
+                            }
+                        } else {
+                            showError = true
+                        }
                     }
                 },
-                modifier = Modifier
-                    .width(150.dp),
+                modifier = Modifier.width(150.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
                 enabled = !emailOrUsernameError && !passwordError &&
                         emailOrUsername.isNotEmpty() && password.isNotEmpty()

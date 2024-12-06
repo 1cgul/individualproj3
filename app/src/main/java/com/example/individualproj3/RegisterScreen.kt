@@ -1,5 +1,6 @@
 package com.example.individualproj3
 
+import android.content.Context
 import android.view.Surface
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,14 +22,54 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Surface
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import java.io.File
+
+data class UserCredentials(
+    val username: String,
+    val email: String,
+    val password: String,
+    val parentPin: String
+)
+
+fun saveUserCredentials(context: Context, credentials: UserCredentials) {
+    try {
+        val file = File(context.filesDir, "user_credentials.txt")
+        file.writeText("${credentials.username}\n${credentials.email}\n${credentials.password}\n${credentials.parentPin}")
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+fun readUserCredentials(context: Context): UserCredentials? {
+    return try {
+        val file = File(context.filesDir, "user_credentials.txt")
+        if (file.exists()) {
+            val lines = file.readLines()
+            if (lines.size >= 4) {
+                UserCredentials(
+                    username = lines[0],
+                    email = lines[1],
+                    password = lines[2],
+                    parentPin = lines[3]
+                )
+            } else null
+        } else null
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
 
 @Composable
 fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -138,12 +179,20 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
                     .width(400.dp)
                     .padding(20.dp)
             )
-
             Button(
                 onClick = {
                     if (!usernameError && !emailError && !passwordError && !pinError &&
                         username.isNotEmpty() && email.isNotEmpty() &&
                         password.isNotEmpty() && parentPin.isNotEmpty()) {
+
+                        // Save credentials when creating account
+                        val credentials = UserCredentials(
+                            username = username,
+                            email = email,
+                            password = password,
+                            parentPin = parentPin
+                        )
+                        saveUserCredentials(context, credentials)
                         navController.navigate("login_screen")
                     }
                 },

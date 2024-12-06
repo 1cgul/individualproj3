@@ -1,17 +1,24 @@
 package com.example.individualproj3
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun Navigation(){
+fun Navigation() {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "login_screen"){
 
-        composable("login_screen"){
-            LoginScreen(navController)
+    NavHost(
+        navController = navController,
+        startDestination = if (sessionManager.isLoggedIn()) "main_screen" else "login_screen"
+    ) {
+        composable("login_screen") {
+            LoginScreen(navController, sessionManager)
         }
         composable("register_screen"){
             RegisterScreen(navController)
