@@ -27,7 +27,22 @@ fun MainScreen(navController: NavController) {
     var showPinDialog by remember { mutableStateOf(false) }
     var showScores by remember { mutableStateOf(false) }
     var parentPin by remember { mutableStateOf("") }
+    var pinError by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+
+    val storedPin = remember {
+        try {
+            val file = File(context.filesDir, "user_credentials.txt")
+            if (file.exists()) {
+                val lines = file.readLines()
+                lines.find { it.startsWith("pin:") }?.substring(4) ?: ""
+            } else ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -45,6 +60,20 @@ fun MainScreen(navController: NavController) {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
+
+            // Logout Button (New)
+            Button(
+                onClick = {
+                    sessionManager.clearLoginState()
+                    navController.navigate("login_screen") {
+                        popUpTo(0) { inclusive = true }  // Clear the back stack
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Text("Logout", color = Color.White)
+            }
 
             // Parent Section Button
             Button(
@@ -85,7 +114,12 @@ fun MainScreen(navController: NavController) {
 
         // PIN Dialog
         if (showPinDialog) {
-            Dialog(onDismissRequest = { showPinDialog = false }) {
+            Dialog(onDismissRequest = {
+                showPinDialog = false
+                parentPin = ""
+                pinError = false
+                errorMessage = ""
+            }) {
                 Card(
                     modifier = Modifier.padding(16.dp),
                 ) {
@@ -98,17 +132,43 @@ fun MainScreen(navController: NavController) {
 
                         TextField(
                             value = parentPin,
-                            onValueChange = { parentPin = it },
-                            label = { Text("PIN") },
+                            onValueChange = { newPin ->
+                                // Only allow digits and limit length to 6
+                                if (newPin.length <= 6 && newPin.all { it.isDigit() }) {
+                                    parentPin = newPin
+                                    pinError = false
+                                }
+                            },
+                            label = { Text("PIN (4-6 digits)") },
                             visualTransformation = PasswordVisualTransformation(),
-                            singleLine = true
+                            singleLine = true,
+                            isError = pinError,
+                            supportingText = {
+                                if (pinError) {
+                                    Text(errorMessage, color = Color.Red)
+                                }
+                            }
                         )
 
                         Button(
                             onClick = {
-                                showPinDialog = false
-                                showScores = true
-                                parentPin = ""
+                                when {
+                                    parentPin.length < 4 -> {
+                                        pinError = true
+                                        errorMessage = "PIN must be at least 4 digits"
+                                    }
+                                    parentPin != storedPin -> {
+                                        pinError = true
+                                        errorMessage = "Incorrect PIN"
+                                    }
+                                    else -> {
+                                        showPinDialog = false
+                                        showScores = true
+                                        parentPin = ""
+                                        pinError = false
+                                        errorMessage = ""
+                                    }
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
                         ) {

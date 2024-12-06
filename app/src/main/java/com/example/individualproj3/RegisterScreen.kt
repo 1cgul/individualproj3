@@ -40,7 +40,12 @@ data class UserCredentials(
 fun saveUserCredentials(context: Context, credentials: UserCredentials) {
     try {
         val file = File(context.filesDir, "user_credentials.txt")
-        file.writeText("${credentials.username}\n${credentials.email}\n${credentials.password}\n${credentials.parentPin}")
+        file.writeText("""
+            ${credentials.username}
+            ${credentials.email}
+            ${credentials.password}
+            pin:${credentials.parentPin}
+        """.trimIndent())
     } catch (e: Exception) {
         e.printStackTrace()
     }
@@ -56,7 +61,7 @@ fun readUserCredentials(context: Context): UserCredentials? {
                     username = lines[0],
                     email = lines[1],
                     password = lines[2],
-                    parentPin = lines[3]
+                    parentPin = lines[3].removePrefix("pin:") // Remove the "pin:" prefix when reading
                 )
             } else null
         } else null
