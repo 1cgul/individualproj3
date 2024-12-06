@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
 import java.util.UUID
+import android.media.MediaPlayer
 
 data class Card(
     val id: Int,
@@ -31,6 +32,9 @@ data class Card(
 fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
     // Lock screen to landscape
     val context = LocalContext.current
+    var flipMediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
+    var applauseMediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
+
     DisposableEffect(context) {
         val activity = context as? android.app.Activity
         val originalOrientation = activity?.requestedOrientation ?: ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -40,12 +44,31 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
             activity?.requestedOrientation = originalOrientation
         }
     }
+    DisposableEffect(Unit) {
+        onDispose {
+            flipMediaPlayer?.release()
+            applauseMediaPlayer?.release()
+        }
+    }
 
     var cards by remember { mutableStateOf(generateCards(levelNumber)) }
     var selectedCards by remember { mutableStateOf(listOf<Card>()) }
     var remainingAttempts by remember { mutableStateOf(5) }
     var showCompletionPopup by remember { mutableStateOf(false) }
     var showFailurePopup by remember { mutableStateOf(false) }
+
+    fun playFlipSound() {
+        flipMediaPlayer?.release()
+        flipMediaPlayer = MediaPlayer.create(context, R.raw.flip)
+        flipMediaPlayer?.start()
+    }
+
+    fun playApplauseSound() {
+        applauseMediaPlayer?.release()
+        applauseMediaPlayer = MediaPlayer.create(context, R.raw.applause)
+        applauseMediaPlayer?.start()
+    }
+
 
     Scaffold(
         topBar = {
@@ -95,6 +118,7 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
                     card = card,
                     onClick = {
                         if (!card.isRevealed && !card.isMatched && selectedCards.size < 2) {
+                            playFlipSound()
                             cards = cards.map {
                                 if (it.id == card.id) it.copy(isRevealed = true)
                                 else it
@@ -108,6 +132,9 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
 
         // Completion Popup
         if (showCompletionPopup) {
+            LaunchedEffect(Unit) {
+                playApplauseSound()
+            }
             AlertDialog(
                 onDismissRequest = { /* Prevents dismissing by clicking outside */ },
                 title = { Text("Congratulations!", textAlign = TextAlign.Center) },
@@ -120,6 +147,7 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
                 confirmButton = {
                     Button(
                         onClick = {
+                            applauseMediaPlayer?.stop()
                             navController.navigate("matching_level_selection_screen")
                             showCompletionPopup = false
                         }
@@ -130,7 +158,7 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
                 dismissButton = {
                     Button(
                         onClick = {
-                            // Restart the same level
+                            applauseMediaPlayer?.stop()
                             cards = generateCards(levelNumber)
                             selectedCards = emptyList()
                             remainingAttempts = 5
