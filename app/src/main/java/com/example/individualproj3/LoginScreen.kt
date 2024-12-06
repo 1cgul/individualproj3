@@ -1,69 +1,70 @@
 package com.example.individualproj3
 
-
+// Import necessary Compose and Android components
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.material3.Surface
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * LoginScreen composable function that handles user authentication
+ *
+ * @param navController Navigation controller for handling screen transitions
+ * @param sessionManager Manages user login state persistence
+ * @param modifier Optional modifier for customizing the layout
+ */
 @Composable
 fun LoginScreen(
     navController: NavController,
     sessionManager: SessionManager,
     modifier: Modifier = Modifier
 ) {
+    // Get local context for accessing stored credentials
     val context = LocalContext.current
+
+    // State variables for form fields and validation
     var emailOrUsername by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
 
-    // Error states
+    // Error state variables for form validation
     var emailOrUsernameError by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf(false) }
 
-    // Regex patterns
+    // Regular expressions for input validation
     val emailPattern = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$")
-    val usernamePattern = Regex("^[a-zA-Z0-9_]{3,20}$")
-    val passwordPattern = Regex("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$")
+    val usernamePattern = Regex("^[a-zA-Z0-9_]{3,20}$")  // 3-20 chars, alphanumeric and underscore
+    val passwordPattern = Regex("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$")  // Min 8 chars, 1 letter, 1 number
 
+    // Main surface container with white background
     Surface(
         color = Color(0xFFFFFFFF)
     ) {
+        // Main column for vertical layout
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // App title
             Text(text = "Kid Games", fontSize = 32.sp, modifier = Modifier.padding(20.dp))
 
+            // Screen title
             Text(
                 text = "Login Screen",
                 fontSize = 24.sp,
                 modifier = Modifier.padding(20.dp)
             )
 
+            // Email/Username input field
             TextField(
                 value = emailOrUsername,
                 onValueChange = {
@@ -82,6 +83,7 @@ fun LoginScreen(
                     .padding(20.dp)
             )
 
+            // Password input field
             TextField(
                 value = password,
                 onValueChange = {
@@ -101,6 +103,7 @@ fun LoginScreen(
                     .padding(20.dp)
             )
 
+            // Error message display
             if (showError) {
                 Text(
                     text = "Invalid credentials. Please try again.",
@@ -108,10 +111,13 @@ fun LoginScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
+
+            // Login button
             Button(
                 onClick = {
                     if (!emailOrUsernameError && !passwordError &&
                         emailOrUsername.isNotEmpty() && password.isNotEmpty()) {
+                        // Verify credentials against stored user data
                         val storedCredentials = readUserCredentials(context)
                         if (storedCredentials != null &&
                             (emailOrUsername == storedCredentials.username ||
@@ -119,6 +125,7 @@ fun LoginScreen(
                             password == storedCredentials.password) {
                             showError = false
                             sessionManager.saveLoginState(true)
+                            // Navigate to main screen and remove login screen from back stack
                             navController.navigate("main_screen") {
                                 popUpTo("login_screen") { inclusive = true }
                             }
@@ -135,6 +142,7 @@ fun LoginScreen(
                 Text("Login", color = Color.White)
             }
 
+            // Registration link row
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(vertical = 8.dp)

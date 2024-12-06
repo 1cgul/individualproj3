@@ -3,10 +3,8 @@ package com.example.individualproj3
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,23 +13,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.window.Dialog
 import java.io.File
 
+/**
+ * MainScreen composable that serves as the primary interface after login
+ * Contains game selection, parent section, and logout functionality
+ *
+ * @param navController Navigation controller for handling screen transitions
+ */
 @Composable
 fun MainScreen(navController: NavController) {
+    // State variables for dialogs and PIN handling
     var showPinDialog by remember { mutableStateOf(false) }
     var showScores by remember { mutableStateOf(false) }
     var parentPin by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+
+    // Context and session management
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
 
+    // Retrieve stored PIN from credentials file
     val storedPin = remember {
         try {
             val file = File(context.filesDir, "user_credentials.txt")
@@ -44,16 +50,18 @@ fun MainScreen(navController: NavController) {
         }
     }
 
+    // Main surface container
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFFFFFFF)
     ) {
+        // Main content column
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(16.dp)
         ) {
-            // App Title
+            // App title display
             Text(
                 text = "Kid Games",
                 fontSize = 32.sp,
@@ -61,12 +69,12 @@ fun MainScreen(navController: NavController) {
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            // Logout Button (New)
+            // Logout button
             Button(
                 onClick = {
                     sessionManager.clearLoginState()
                     navController.navigate("login_screen") {
-                        popUpTo(0) { inclusive = true }  // Clear the back stack
+                        popUpTo(0) { inclusive = true }  // Clear navigation back stack
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
@@ -75,7 +83,7 @@ fun MainScreen(navController: NavController) {
                 Text("Logout", color = Color.White)
             }
 
-            // Parent Section Button
+            // Parent section access button
             Button(
                 onClick = { showPinDialog = true },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
@@ -84,26 +92,26 @@ fun MainScreen(navController: NavController) {
                 Text("Parent Section", color = Color.White)
             }
 
-            // Prompt to Select a Game
+            // Game selection prompt
             Text(
                 text = "Select a Game",
                 fontSize = 24.sp,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Game Selection Row
+            // Game selection options
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Matching Game
+                // Matching game icon and navigation
                 GameIcon(
                     iconResourceId = R.drawable.matchinggame,
                     gameName = "Matching Game",
                     onClick = { navController.navigate("matching_level_selection_screen") }
                 )
 
-                // Math Game
+                // Math game icon and navigation
                 GameIcon(
                     iconResourceId = R.drawable.mathgame,
                     gameName = "Math Game",
@@ -112,9 +120,10 @@ fun MainScreen(navController: NavController) {
             }
         }
 
-        // PIN Dialog
+        // Parent PIN verification dialog
         if (showPinDialog) {
             Dialog(onDismissRequest = {
+                // Reset PIN dialog state on dismiss
                 showPinDialog = false
                 parentPin = ""
                 pinError = false
@@ -130,10 +139,11 @@ fun MainScreen(navController: NavController) {
                     ) {
                         Text("Enter Parent PIN", fontSize = 20.sp)
 
+                        // PIN input field with validation
                         TextField(
                             value = parentPin,
                             onValueChange = { newPin ->
-                                // Only allow digits and limit length to 6
+                                // Validate input: digits only, max length 6
                                 if (newPin.length <= 6 && newPin.all { it.isDigit() }) {
                                     parentPin = newPin
                                     pinError = false
@@ -150,6 +160,7 @@ fun MainScreen(navController: NavController) {
                             }
                         )
 
+                        // PIN verification button
                         Button(
                             onClick = {
                                 when {
@@ -162,6 +173,7 @@ fun MainScreen(navController: NavController) {
                                         errorMessage = "Incorrect PIN"
                                     }
                                     else -> {
+                                        // Success: show scores and reset dialog
                                         showPinDialog = false
                                         showScores = true
                                         parentPin = ""
@@ -179,7 +191,7 @@ fun MainScreen(navController: NavController) {
             }
         }
 
-        // Scores Dialog
+        // Game scores display dialog
         if (showScores) {
             Dialog(onDismissRequest = { showScores = false }) {
                 Card(
@@ -197,7 +209,7 @@ fun MainScreen(navController: NavController) {
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
 
-                        // Read and display scores
+                        // Load and display scores from file
                         val scores = try {
                             val file = File(context.filesDir, "game_scores.txt")
                             if (file.exists()) file.readText() else "No scores recorded yet"
@@ -212,6 +224,7 @@ fun MainScreen(navController: NavController) {
                                 .padding(vertical = 8.dp)
                         )
 
+                        // Close button for scores dialog
                         Button(
                             onClick = { showScores = false },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
@@ -226,6 +239,13 @@ fun MainScreen(navController: NavController) {
     }
 }
 
+/**
+ * Reusable game icon composable for displaying game options
+ *
+ * @param iconResourceId Resource ID for the game icon
+ * @param gameName Name of the game to display
+ * @param onClick Callback function when the icon is clicked
+ */
 @Composable
 fun GameIcon(
     iconResourceId: Int,

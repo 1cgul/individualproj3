@@ -1,5 +1,6 @@
 package com.example.individualproj3
 
+// Import necessary Compose and Android components
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
@@ -23,11 +24,20 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Math Game screen composable that handles the main game logic and UI
+ *
+ * @param navController Navigation controller for screen transitions
+ * @param levelNumber Current level being played (1-3)
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MathGameScreen(navController: NavController, levelNumber: Int) {
+    // Context and media player initialization
     val context = LocalContext.current
     var mediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
+
+    // Game state variables
     var currentProblem by remember { mutableStateOf(1) }
     var correctAnswers by remember { mutableStateOf(0) }
     var num1 by remember { mutableStateOf(0) }
@@ -35,6 +45,8 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
     var operation by remember { mutableStateOf("") }
     var correctAnswer by remember { mutableStateOf(0) }
     var answerOptions by remember { mutableStateOf(listOf<Int>()) }
+
+    // Drag and drop state variables
     var selectedAnswer by remember { mutableStateOf<Int?>(null) }
     var droppedAnswer by remember { mutableStateOf<Int?>(null) }
     var offsetX by remember { mutableStateOf(0f) }
@@ -42,21 +54,29 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
     var isDragging by remember { mutableStateOf(false) }
     var showCompletionDialog by remember { mutableStateOf(false) }
 
+    // Cleanup media player on screen disposal
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer?.release()
         }
     }
+
+    /**
+     * Plays victory sound effect
+     */
     fun playApplauseSound() {
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer.create(context, R.raw.applause)
         mediaPlayer?.start()
     }
+
+    /**
+     * Logs game completion score to file
+     */
     fun logMathScore(context: Context, level: Int, correctAnswers: Int) {
         try {
             val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             val logEntry = "Math Game - Level: $level, Correct Answers: $correctAnswers/5, Completed: $timestamp\n"
-
             val file = File(context.filesDir, "game_scores.txt")
             file.appendText(logEntry)
         } catch (e: Exception) {
@@ -64,10 +84,14 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
         }
     }
 
+    /**
+     * Generates three unique answer options including the correct one
+     */
     fun generateUniqueAnswers(correctAnswer: Int): List<Int> {
         val answers = mutableSetOf<Int>()
         answers.add(correctAnswer)
         val usedDifferences = mutableSetOf<Int>()
+
         while (answers.size < 3) {
             var difference: Int
             do {
@@ -75,8 +99,6 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
             } while (difference == 0 || usedDifferences.contains(difference))
 
             usedDifferences.add(difference)
-
-            // Add new wrong answer
             val wrongAnswer = correctAnswer + difference
             if (wrongAnswer >= 0) {
                 answers.add(wrongAnswer)
@@ -86,8 +108,11 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
         return answers.toList().shuffled()
     }
 
+    /**
+     * Generates a new math problem based on the current level
+     */
     fun generateNewProblem() {
-        // First clear all state
+        // Reset state
         selectedAnswer = null
         droppedAnswer = null
         offsetX = 0f
@@ -95,7 +120,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
         isDragging = false
         answerOptions = emptyList()
 
-        // Then generate new problem
+        // Generate numbers and operation
         num1 = Random.nextInt(0, 100)
         num2 = Random.nextInt(0, 100)
 
@@ -104,12 +129,10 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                 operation = "+"
                 correctAnswer = num1 + num2
             }
-
             2 -> {
                 operation = "-"
                 correctAnswer = num1 - num2
             }
-
             3 -> {
                 operation = if (Random.nextBoolean()) "+" else "-"
                 correctAnswer = if (operation == "+") num1 + num2 else num1 - num2
@@ -118,17 +141,17 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
         answerOptions = generateUniqueAnswers(correctAnswer)
     }
 
+    // Generate initial problem when screen loads
     LaunchedEffect(Unit) {
         generateNewProblem()
     }
 
-// Completion Dialog
+    // Level completion dialog
     if (showCompletionDialog) {
         LaunchedEffect(Unit) {
             playApplauseSound()
-            logMathScore(context, levelNumber, correctAnswers) // Add this line to log the score
+            logMathScore(context, levelNumber, correctAnswers)
         }
-
 
         Dialog(onDismissRequest = { }) {
             Card(
@@ -139,17 +162,10 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        "Level Complete!",
-                        fontSize = 24.sp
-                    )
-                    Text(
-                        "You got $correctAnswers out of 5 correct!",
-                        fontSize = 18.sp
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
+                    Text("Level Complete!", fontSize = 24.sp)
+                    Text("You got $correctAnswers out of 5 correct!", fontSize = 18.sp)
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Button(
                             onClick = {
                                 mediaPlayer?.stop()
@@ -158,9 +174,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                                 showCompletionDialog = false
                                 generateNewProblem()
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Blue
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
                         ) {
                             Text("Retry")
                         }
@@ -169,9 +183,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                                 mediaPlayer?.stop()
                                 navController.navigate("math_level_selection")
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Blue
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
                         ) {
                             Text("Back to Levels")
                         }
@@ -180,6 +192,8 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
             }
         }
     }
+
+    // Main game UI
     Scaffold(
         topBar = {
             TopAppBar(
@@ -204,7 +218,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
             )
         }
     ) { paddingValues ->
-        // Main container
+        // Game content container
         Surface(
             color = Color(0xFFFFFFFF)
         ) {
@@ -216,12 +230,14 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                // Problem counter
                 Text(
                     text = "Level $levelNumber - Problem $currentProblem/5",
                     fontSize = 40.sp,
                     modifier = Modifier.padding(bottom = 64.dp)
                 )
 
+                // Math problem display
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
@@ -232,6 +248,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                         fontSize = 30.sp
                     )
 
+                    // Answer drop zone
                     Box(
                         modifier = Modifier
                             .size(80.dp)
@@ -254,6 +271,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                     }
                 }
 
+                // Draggable answer options
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(32.dp),
                     modifier = Modifier.padding(bottom = 64.dp)
@@ -303,6 +321,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                     }
                 }
 
+                // Confirm answer button
                 if (droppedAnswer != null) {
                     Button(
                         onClick = {
@@ -338,4 +357,4 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
             }
         }
     }
-        }
+}
