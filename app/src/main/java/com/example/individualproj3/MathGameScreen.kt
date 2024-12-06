@@ -16,10 +16,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import kotlin.random.Random
+import android.content.Context
+import android.media.MediaPlayer
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MathGameScreen(navController: NavController, levelNumber: Int) {
+    val context = LocalContext.current
+    var mediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
     var currentProblem by remember { mutableStateOf(1) }
     var correctAnswers by remember { mutableStateOf(0) }
     var num1 by remember { mutableStateOf(0) }
@@ -34,15 +39,22 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
     var isDragging by remember { mutableStateOf(false) }
     var showCompletionDialog by remember { mutableStateOf(false) }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer?.release()
+        }
+    }
+    fun playApplauseSound() {
+        mediaPlayer?.release()
+        mediaPlayer = MediaPlayer.create(context, R.raw.applause)
+        mediaPlayer?.start()
+    }
+
     fun generateUniqueAnswers(correctAnswer: Int): List<Int> {
         val answers = mutableSetOf<Int>()
         answers.add(correctAnswer)
-
-        // Keep track of attempted differences to avoid repeating
         val usedDifferences = mutableSetOf<Int>()
-
         while (answers.size < 3) {
-            // Try to find a new unique difference
             var difference: Int
             do {
                 difference = Random.nextInt(-10, 11)
@@ -52,7 +64,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
 
             // Add new wrong answer
             val wrongAnswer = correctAnswer + difference
-            if (wrongAnswer >= 0) {  // Ensure answer is not negative
+            if (wrongAnswer >= 0) {
                 answers.add(wrongAnswer)
             }
         }
@@ -67,7 +79,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
         offsetX = 0f
         offsetY = 0f
         isDragging = false
-        answerOptions = emptyList()  // Clear answers first
+        answerOptions = emptyList()
 
         // Then generate new problem
         num1 = Random.nextInt(0, 100)
@@ -89,8 +101,6 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                 correctAnswer = if (operation == "+") num1 + num2 else num1 - num2
             }
         }
-
-        // Generate and set new answers after a brief delay to ensure clean state
         answerOptions = generateUniqueAnswers(correctAnswer)
     }
 
@@ -100,6 +110,10 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
 
 // Completion Dialog
     if (showCompletionDialog) {
+        LaunchedEffect(Unit) {
+            playApplauseSound()
+        }
+
         Dialog(onDismissRequest = { }) {
             Card(
                 modifier = Modifier.padding(16.dp),
@@ -122,6 +136,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                     ) {
                         Button(
                             onClick = {
+                                mediaPlayer?.stop()
                                 currentProblem = 1
                                 correctAnswers = 0
                                 showCompletionDialog = false
@@ -134,7 +149,10 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                             Text("Retry")
                         }
                         Button(
-                            onClick = { navController.navigate("math_level_selection") },
+                            onClick = {
+                                mediaPlayer?.stop()
+                                navController.navigate("math_level_selection")
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.Blue
                             )
@@ -225,7 +243,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                     modifier = Modifier.padding(bottom = 64.dp)
                 ) {
                     answerOptions.forEachIndexed { index, answer ->
-                        key(answer) {  // Add key to help track items
+                        key(answer) {
                             Box(
                                 modifier = Modifier
                                     .offset {
@@ -236,7 +254,7 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
                                     }
                                     .size(80.dp)
                                     .background(Color.Blue)
-                                    .pointerInput(key1 = answer) {  // Add key to pointerInput
+                                    .pointerInput(key1 = answer) {
                                         detectDragGestures(
                                             onDragStart = {
                                                 selectedAnswer = answer

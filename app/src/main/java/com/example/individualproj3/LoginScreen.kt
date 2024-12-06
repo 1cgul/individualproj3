@@ -29,9 +29,18 @@ import androidx.compose.material3.Surface
 
 @Composable
 fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+    var emailOrUsername by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    // Error states
+    var emailOrUsernameError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
+
+    // Regex patterns
+    val emailPattern = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$")
+    val usernamePattern = Regex("^[a-zA-Z0-9_]{3,20}$")
+    val passwordPattern = Regex("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$")
+
     Surface(
         color = Color(0xFFFFFFFF)
     ){
@@ -41,9 +50,8 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Kid Games", fontSize = 32.sp, modifier = Modifier.padding(20.dp)
+            Text(text = "Kid Games", fontSize = 32.sp, modifier = Modifier.padding(20.dp))
 
-            )
             Text(
                 text = "Login Screen",
                 fontSize = 24.sp,
@@ -51,9 +59,18 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
             )
 
             TextField(
-                value = email,
-                onValueChange = { email = it },
+                value = emailOrUsername,
+                onValueChange = {
+                    emailOrUsername = it
+                    emailOrUsernameError = !it.matches(emailPattern) && !it.matches(usernamePattern)
+                },
                 label = { Text("Enter your email/username...") },
+                isError = emailOrUsernameError,
+                supportingText = {
+                    if (emailOrUsernameError) {
+                        Text("Please enter a valid email or username (3-20 characters)")
+                    }
+                },
                 modifier = Modifier
                     .width(400.dp)
                     .padding(20.dp)
@@ -61,9 +78,18 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
 
             TextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    passwordError = !it.matches(passwordPattern)
+                },
                 visualTransformation = PasswordVisualTransformation(),
                 label = { Text("Enter your password...") },
+                isError = passwordError,
+                supportingText = {
+                    if (passwordError) {
+                        Text("Password must be at least 8 characters with at least 1 letter and 1 number")
+                    }
+                },
                 modifier = Modifier
                     .width(400.dp)
                     .padding(20.dp)
@@ -71,13 +97,16 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
 
             Button(
                 onClick = {
-                    navController.navigate("main_screen")
-
+                    if (!emailOrUsernameError && !passwordError &&
+                        emailOrUsername.isNotEmpty() && password.isNotEmpty()) {
+                        navController.navigate("main_screen")
+                    }
                 },
                 modifier = Modifier
                     .width(150.dp),
-
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
+                enabled = !emailOrUsernameError && !passwordError &&
+                        emailOrUsername.isNotEmpty() && password.isNotEmpty()
             ) {
                 Text("Login", color = Color.White)
             }
@@ -99,4 +128,4 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier){
             }
         }
     }
-    }
+}
