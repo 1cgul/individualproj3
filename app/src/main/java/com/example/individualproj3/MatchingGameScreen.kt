@@ -1,5 +1,6 @@
 package com.example.individualproj3
 
+import android.content.Context
 import android.content.pm.ActivityInfo
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -19,6 +20,9 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.delay
 import java.util.UUID
 import android.media.MediaPlayer
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 data class Card(
     val id: Int,
@@ -206,6 +210,18 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
         }
     }
 
+    fun logScore(context: Context, level: Int, remainingAttempts: Int) {
+        try {
+            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            val logEntry = "Matching Game - Level: $level, Remaining Attempts: $remainingAttempts, Completed: $timestamp\n"
+
+            val file = File(context.filesDir, "game_scores.txt")
+            file.appendText(logEntry)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     // Game Logic
     LaunchedEffect(selectedCards) {
         if (selectedCards.size == 2) {
@@ -219,6 +235,7 @@ fun MatchingGameScreen(navController: NavController, levelNumber: Int) {
 
                 // Check for level completion
                 if (cards.all { it.isMatched }) {
+                    logScore(context, levelNumber, remainingAttempts) // Add logging here
                     showCompletionPopup = true
                 }
             } else {

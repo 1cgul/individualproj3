@@ -19,6 +19,9 @@ import kotlin.random.Random
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.compose.ui.platform.LocalContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +51,17 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer.create(context, R.raw.applause)
         mediaPlayer?.start()
+    }
+    fun logMathScore(context: Context, level: Int, correctAnswers: Int) {
+        try {
+            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            val logEntry = "Math Game - Level: $level, Correct Answers: $correctAnswers/5, Completed: $timestamp\n"
+
+            val file = File(context.filesDir, "game_scores.txt")
+            file.appendText(logEntry)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun generateUniqueAnswers(correctAnswer: Int): List<Int> {
@@ -112,7 +126,9 @@ fun MathGameScreen(navController: NavController, levelNumber: Int) {
     if (showCompletionDialog) {
         LaunchedEffect(Unit) {
             playApplauseSound()
+            logMathScore(context, levelNumber, correctAnswers) // Add this line to log the score
         }
+
 
         Dialog(onDismissRequest = { }) {
             Card(
