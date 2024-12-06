@@ -32,6 +32,20 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var parentPin by remember { mutableStateOf("") }
+
+    // Error states
+    var usernameError by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
+    var pinError by remember { mutableStateOf(false) }
+
+    // Regex patterns
+    val usernamePattern = Regex("^[a-zA-Z0-9_]{3,20}$") // 3-20 characters, alphanumeric and underscore
+    val emailPattern = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$")
+    val passwordPattern = Regex("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$") // At least 8 chars, 1 letter and 1 number
+    val pinPattern = Regex("^\\d{4,6}$") // 4-6 digit pin
+
     Surface(
         color = Color(0xFFFFFFFF)
     ){
@@ -41,9 +55,8 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Kid Games", fontSize = 32.sp, modifier = Modifier.padding(20.dp)
+            Text(text = "Kid Games", fontSize = 32.sp, modifier = Modifier.padding(20.dp))
 
-            )
             Text(
                 text = "Register Screen",
                 fontSize = 24.sp,
@@ -52,8 +65,17 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
 
             TextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = {
+                    username = it
+                    usernameError = !it.matches(usernamePattern)
+                },
                 label = { Text("Enter your username...") },
+                isError = usernameError,
+                supportingText = {
+                    if (usernameError) {
+                        Text("Username must be 3-20 characters long and contain only letters, numbers, or underscore")
+                    }
+                },
                 modifier = Modifier
                     .width(400.dp)
                     .padding(20.dp)
@@ -61,8 +83,17 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
 
             TextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = {
+                    email = it
+                    emailError = !it.matches(emailPattern)
+                },
                 label = { Text("Enter parent/guardian email...") },
+                isError = emailError,
+                supportingText = {
+                    if (emailError) {
+                        Text("Please enter a valid email address")
+                    }
+                },
                 modifier = Modifier
                     .width(400.dp)
                     .padding(20.dp)
@@ -70,9 +101,39 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
 
             TextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    passwordError = !it.matches(passwordPattern)
+                },
                 visualTransformation = PasswordVisualTransformation(),
                 label = { Text("Enter your password...") },
+                isError = passwordError,
+                supportingText = {
+                    if (passwordError) {
+                        Text("Password must be at least 8 characters with at least 1 letter and 1 number")
+                    }
+                },
+                modifier = Modifier
+                    .width(400.dp)
+                    .padding(20.dp)
+            )
+
+            TextField(
+                value = parentPin,
+                onValueChange = {
+                    if (it.length <= 6) {
+                        parentPin = it
+                        pinError = !it.matches(pinPattern)
+                    }
+                },
+                visualTransformation = PasswordVisualTransformation(),
+                label = { Text("Enter parent PIN (4-6 digits)...") },
+                isError = pinError,
+                supportingText = {
+                    if (pinError) {
+                        Text("PIN must be between 4-6 digits")
+                    }
+                },
                 modifier = Modifier
                     .width(400.dp)
                     .padding(20.dp)
@@ -80,13 +141,18 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
 
             Button(
                 onClick = {
-                    navController.navigate("login_screen")
-
+                    if (!usernameError && !emailError && !passwordError && !pinError &&
+                        username.isNotEmpty() && email.isNotEmpty() &&
+                        password.isNotEmpty() && parentPin.isNotEmpty()) {
+                        navController.navigate("login_screen")
+                    }
                 },
                 modifier = Modifier
                     .width(150.dp),
-
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
+                enabled = !usernameError && !emailError && !passwordError && !pinError &&
+                        username.isNotEmpty() && email.isNotEmpty() &&
+                        password.isNotEmpty() && parentPin.isNotEmpty()
             ) {
                 Text("Create Account", color = Color.White)
             }
@@ -108,4 +174,4 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
             }
         }
     }
-    }
+}
